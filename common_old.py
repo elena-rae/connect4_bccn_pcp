@@ -1,15 +1,11 @@
 import numpy as np
 from enum import Enum
-from typing import Optional
+from typing import Optional, Callable, Tuple
 
 from numpy.core._multiarray_umath import ndarray
 
-BoardPiece = np.int8  # The data type (dtype) of the board
-NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
-PLAYER1 = BoardPiece(1)  # board[i, j] == PLAYER1 where player 1 has a piece
-PLAYER2 = BoardPiece(2)  # board[i, j] == PLAYER2 where player 2 has a piece
-
-PlayerAction = np.int8  # The column to be played
+class SavedState:
+    pass
 
 
 class GameState(Enum):
@@ -18,12 +14,26 @@ class GameState(Enum):
     STILL_PLAYING = 0
 
 
+BoardPiece = np.int8  # The data type (dtype) of the board
+NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
+PLAYER1 = BoardPiece(1)  # board[i, j] == PLAYER1 where player 1 has a piece
+PLAYER2 = BoardPiece(2)  # board[i, j] == PLAYER2 where player 2 has a piece
+
+PlayerAction = np.int8  # The column to be played
+
+GenMove = Callable[
+        [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
+        Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
+        ]
+
+
 def initialize_game_state() -> np.ndarray:
     """Returns an ndarray, shape (6, 7) and data type (dtype) BoardPiece, initialized to 0 (NO_PLAYER). """
     return np.zeros((6, 7), dtype=BoardPiece)
 
 
 def pretty_print_board(board: np.ndarray) -> str:
+    """ ---> leave this instead of string? Union[ndarray, Iterable, int, float]:"""
     """ return `board` converted to a human readable string representation,
         to be used when playing or printing diagnostics to the console (stdout). The piece in
         board[0, 0] should appear in the lower-left."""
@@ -56,7 +66,8 @@ def pretty_print_board(board: np.ndarray) -> str:
 
     print(pretty_line)
     print(pretty_numbering)
-    return (pretty_board)
+
+    return pretty_board
 
 
 def string_to_board(pp_board: str) -> np.ndarray:
@@ -186,7 +197,7 @@ def connected_four(
     for step in range(0, 3):
         step = step + 1
         print(step, "to up right")
-        if last_action + step <= 6 and last_row + step <=5:
+        if last_row + step <= 5 and last_action + step <= 6:
             if board[last_row + step, last_action + step] == player:
                 count = count + 1
                 print("count", count)
@@ -200,7 +211,7 @@ def connected_four(
     for step in range(0, 3):
         step = step + 1
         print(step, "to lower left")
-        if last_action - step >= 0 and last_row - step >= 0:
+        if last_row - step >= 0 and last_action - step >= 0:
             if board[last_row - step, last_action - step] == player:
                 count = count + 1
                 print("count", count)
@@ -218,8 +229,68 @@ def connected_four(
     else:
         count = 0
 
+    """ search diagonal to lower right (increasing column nr, decreasing row nr) """
+    for step in range(0, 3):
+        step = step + 1
+        print(step, "to low right")
+        if last_row - step >= 0 and last_action + step <= 6:
+            if board[last_row - step, last_action + step] == player:
+                count = count + 1
+                print("count", count)
+            else:
+                print("nothing low right")
+                break
+        else:
+            print("low right over board")
+            break
+    """ search diagonal to upper left (decreasing column nr, increasing row nr) """
+    for step in range(0, 3):
+        step = step + 1
+        print(step, "to upper left")
+        if last_row + step <= 5 and last_action - step >= 0:
+            if board[last_row + step, last_action - step] == player:
+                count = count + 1
+                print("count", count)
+            else:
+                print("nothing upper left")
+                break
+        else:
+            print("upper left over board")
+            break
+
+    """check if diagonal (lower left to upper right) connect four is achieved, if not reset counter  """
+    if count >= 3:
+        print("4 connected, Player {} won!".format(player))
+        return True
+    else:
+        count = 0
         print("next player continue!")
         return False
+
+
+def connected_four_iter(
+    board: np.ndarray, player: BoardPiece, _last_action: Optional[PlayerAction] = None
+) -> bool:
+    rows, cols = board.shape
+    rows_edge = rows - CONNECT_N + 1
+    cols_edge = cols - CONNECT_N + 1
+    for i in range(rows):
+        for j in range(cols_edge):
+            if np.all(board[i, j:j+CONNECT_N] == player):
+                return True
+    for i in range(rows_edge):
+        for j in range(cols):
+            if np.all(board[i:i+CONNECT_N, j] == player):
+                return True
+    for i in range(rows_edge):
+        for j in range(cols_edge):
+            block = board[i:i+CONNECT_N, j:j+CONNECT_N]
+            if np.all(np.diag(block) == player):
+                return True
+            if np.all(np.diag(block[::-1, :]) == player):
+                return True
+    return False
+
 
 
 def check_end_state(
@@ -233,17 +304,17 @@ def check_end_state(
     raise NotImplemented()
 
 
-""" next week
-
+"""
 def human_vs_agent(
         generate_move_1: cu.GenMove,
         generate_move_2: cu.GenMove = user_move,
         player_1: str = "Player 1",
         player_2: str = "Player 2",
         args_1: tuple = (),
-        args_2: tupla = (),
+        args_2: tuple = (),
         init_1: Callable = lambda board, player: None,
         init_2: Callable = lambda board, player: None,
 ):
     pass
+
 """

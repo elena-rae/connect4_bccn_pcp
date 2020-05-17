@@ -32,7 +32,8 @@ def initialize_game_state() -> np.ndarray:
     return np.zeros((6, 7), dtype=BoardPiece)
 
 
-def pretty_print_board(board: np.ndarray) -> Union[ndarray, Iterable, int, float]:
+def pretty_print_board(board: np.ndarray) -> str:
+    """ ---> leave this instead of string? Union[ndarray, Iterable, int, float]:"""
     """ return `board` converted to a human readable string representation,
         to be used when playing or printing diagnostics to the console (stdout). The piece in
         board[0, 0] should appear in the lower-left."""
@@ -266,6 +267,30 @@ def connected_four(
         print("next player continue!")
         return False
 
+"""
+def connected_four_iter(
+    board: np.ndarray, player: BoardPiece, _last_action: Optional[PlayerAction] = None
+) -> bool:
+    rows, cols = board.shape
+    rows_edge = rows - CONNECT_N + 1
+    cols_edge = cols - CONNECT_N + 1
+    for i in range(rows):
+        for j in range(cols_edge):
+            if np.all(board[i, j:j+CONNECT_N] == player):
+                return True
+    for i in range(rows_edge):
+        for j in range(cols):
+            if np.all(board[i:i+CONNECT_N, j] == player):
+                return True
+    for i in range(rows_edge):
+        for j in range(cols_edge):
+            block = board[i:i+CONNECT_N, j:j+CONNECT_N]
+            if np.all(np.diag(block) == player):
+                return True
+            if np.all(np.diag(block[::-1, :]) == player):
+                return True
+    return False
+"""
 
 
 
