@@ -33,41 +33,43 @@ def initialize_game_state() -> np.ndarray:
 
 
 def pretty_print_board(board: np.ndarray) -> str:
-    """ ---> leave this instead of string? Union[ndarray, Iterable, int, float]:"""
     """ return `board` converted to a human readable string representation,
         to be used when playing or printing diagnostics to the console (stdout). The piece in
         board[0, 0] should appear in the lower-left."""
 
-    """define strings for the general layout of the output"""
-    pretty_numbering = str("| 0 1 2 3 4 5 6 |")
-    pretty_line = str("|===============|")
 
-    """ flip board array and transform into string change array values into symbols (x,o), 
-        raise error for invalid values in board array """
-    pretty_board = np.flipud(board.astype(str))
+    """ flip board array and transform into string,  
+    change array values into symbols (x,o), raise error for invalid values in board array """
+    flipped_board = np.flipud(board.astype(str))
 
-    for row in range(len(pretty_board)):
-        for elem in range(len(pretty_board[row])):
-            if pretty_board[row, elem] == '0':
-                pretty_board[row, elem] = " "
-            elif pretty_board[row, elem] == "1":
-                pretty_board[row, elem] = "x"
-            elif pretty_board[row, elem] == "2":
-                pretty_board[row, elem] = "o"
+    for r, row in enumerate(flipped_board):
+        for c, elem in enumerate(row):
+            if flipped_board[r, c] == '0':
+                flipped_board[r, c] = " "
+            elif flipped_board[r, c] == "1":
+                flipped_board[r, c] = "x"
+            elif flipped_board[r, c] == "2":
+                flipped_board[r, c] = "o"
             else:
                 print("Invalid Input")
                 return 0
 
-    """ generate the strings for each row of the board array"""
-    print(pretty_line)
 
-    for row in pretty_board:
-        print("|", ' '.join([str(elem) for elem in row]), "|")
+    pretty_board = ["|===============|"]
 
-    print(pretty_line)
-    print(pretty_numbering)
+    """ generate and add the strings for each row of the board array"""
+    for row in flipped_board:
+        joined_row = ' '.join(row)
+        joined_row = "| " + joined_row + " |"
+        pretty_board.append(joined_row)
+
+    pretty_board.append("|===============|")
+    pretty_board.append("| 0 1 2 3 4 5 6 |")
+    pretty_board = "\n".join(pretty_board)
 
     return pretty_board
+
+
 
 
 def string_to_board(pp_board: str) -> np.ndarray:
@@ -76,7 +78,31 @@ def string_to_board(pp_board: str) -> np.ndarray:
     This is quite useful for debugging, when the agent crashed and you have the last
     board state as a string.
     """
-    raise NotImplemented()
+    board_as_array = np.zeros((6,7), dtype=BoardPiece)
+
+    """transform string to array for better handling"""
+    board = np.array(list(pp_board))
+    """remove newlines comands from string, and reshape back to row x columns and remove pretty boarders"""
+    newline_indices = np.argwhere(board == "\n")
+    board = np.delete(board, newline_indices)
+    board = board.reshape((9,17))
+    boarder_indices = [0,7,8]
+    board = np.delete(board,boarder_indices,0)
+
+    """ remove surplus gaps, for every x place 1 and every o place 2 in the initialized 0-array  """
+    gap_indices = (0,1,3,5,7,9,11,13,15,16,17)
+
+    for r, row in enumerate(board):
+        string_to_int= np.delete(row, gap_indices)
+        x_indices = np.argwhere(string_to_int == "x")
+        board_as_array[r,x_indices] = 1
+        o_indices = np.argwhere(string_to_int == "o")
+        board_as_array[r,o_indices] = 2
+
+    """flip and return the array"""
+    board_as_array = np.flipud(board_as_array)
+    return board_as_array
+
 
 
 def apply_player_action(
@@ -109,7 +135,7 @@ def apply_player_action(
         return board
 
 
-def connected_four(
+def connected_four_me(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
 ) -> bool:
     """
@@ -267,10 +293,13 @@ def connected_four(
         print("next player continue!")
         return False
 
-"""
-def connected_four_iter(
+
+def connected_four(
     board: np.ndarray, player: BoardPiece, _last_action: Optional[PlayerAction] = None
 ) -> bool:
+    """Choose N, for connect_four, N = 4"""
+    CONNECT_N=4
+
     rows, cols = board.shape
     rows_edge = rows - CONNECT_N + 1
     cols_edge = cols - CONNECT_N + 1
@@ -290,7 +319,7 @@ def connected_four_iter(
             if np.all(np.diag(block[::-1, :]) == player):
                 return True
     return False
-"""
+
 
 
 
@@ -302,20 +331,12 @@ def check_end_state(
     action won (GameState.IS_WIN) or drawn (GameState.IS_DRAW) the game,
     or is play still on-going (GameState.STILL_PLAYING)?
     """
-    raise NotImplemented()
+    if connected_four(board, player, last_action) is True:
+        return GameState.IS_WIN
 
+    if np.any(board == 0) == True:
+        return GameState.STILL_PLAYING
 
-"""
-def human_vs_agent(
-        generate_move_1: cu.GenMove,
-        generate_move_2: cu.GenMove = user_move,
-        player_1: str = "Player 1",
-        player_2: str = "Player 2",
-        args_1: tuple = (),
-        args_2: tuple = (),
-        init_1: Callable = lambda board, player: None,
-        init_2: Callable = lambda board, player: None,
-):
-    pass
+    if np.all(board != 0) == True:
+        return GameState.IS_DRAW
 
-"""
