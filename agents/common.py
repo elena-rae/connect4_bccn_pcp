@@ -139,6 +139,8 @@ def connected_four_me(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
 ) -> bool:
     """
+    Inefficient! should not be used!
+
     Returns True if there are four adjacent pieces equal to `player` arranged
     in either a horizontal, vertical, or diagonal line. Returns False otherwise.
     If desired, the last action taken (i.e. last column played) can be provided
