@@ -5,27 +5,29 @@ MINIMAX_DEPTH = 2
 
 
 def minimax(
-        board: np.ndarray, depth: MINIMAX_DEPTH, maximizingTrue  # PlayerToBeMaximized: BoardPiece,
+        board: np.ndarray, depth: MINIMAX_DEPTH, maximizingTrue #PlayerToBeMaximized: BoardPiece,
 ):
     """some general minimax algorithm description"""
 
     valid_columns = get_valid_columns(board)
-    best_column = np.random.choice(valid_columns, 1)
+    best_column = np.random.choice(valid_columns,1)
     """Edge Case: (terminal node) AI or Player is winning with the next piece or the board is full (draw)"""
 
-    is_terminal, terminal_result, winning_column, winning_player = is_terminal_node(board, valid_columns)
-    if depth == 0 or is_terminal == True:
-        if is_terminal:
-            if terminal_result == GameState.IS_WIN and winning_player == PLAYER2:
-                return winning_column, 100000000000
-            elif terminal_result == GameState.IS_WIN and winning_player == PLAYER1:
-                return winning_column, -100000000000
-            elif terminal_result == GameState.IS_DRAW:  # Game over because draw (no valid moves)
-                return winning_column, None
+    for column in valid_columns:
 
-        else:  # case where depth = 0
-            heuristic_value_for_next_move = evaluate_board(board, PLAYER2)  ### player needs to be AI
-            return None, heuristic_value_for_next_move
+        is_terminal = is_terminal_node(board, column)
+        if depth == 0 or is_terminal == True:
+            if is_terminal:
+                if check_end_state(apply_player_action(board, column, PLAYER2), PLAYER2) == GameState.IS_WIN:
+                    return column, 100000000000
+                elif check_end_state(apply_player_action(board, column, PLAYER1), PLAYER1) == GameState.IS_WIN:
+                    return column, -100000000000
+                else:  #Game over because draw (no valid moves)
+                    return column, None
+
+            else: #case where depth = 0
+                heuristic_value_for_next_move = evaluate_board(board, PLAYER2) ### player needs to be AI
+                return None, heuristic_value_for_next_move
 
     """ recursive minimizing/maximizing case"""
     if maximizingTrue:
@@ -33,49 +35,44 @@ def minimax(
 
         for column in valid_columns:
             c_board = board.copy()
-            apply_player_action(c_board, column, PLAYER2)  ### player needs to be AI
-            new_score = minimax(c_board, depth - 1, False)[
-                1]  ### maximizingTrue is False for next iter, because  will not be AI
+            apply_player_action(c_board, column, PLAYER2) ### player needs to be AI
+            new_score =  minimax(c_board, depth-1, False)[1] ### maximizingTrue is False for next iter, because  will not be AI
             if new_score > value:
                 value = new_score
                 best_column = column
         return best_column, value
-    else:  # minimizing player case
+    else:    # minimizing player case
         value = np.inf
         for column in valid_columns:
             c_board = board.copy()
-            apply_player_action(c_board, column, PLAYER1)  ### player needs to be minimizing player
-            new_score = minimax(c_board, depth - 1, True)[
-                1]  ### maximizingTrue is True for next iter, because will be AI
+            apply_player_action(c_board, column, PLAYER1) ### player needs to be minimizing player
+            new_score =  minimax(c_board, depth-1, True)[1] ### maximizingTrue is True for next iter, because will be AI
             if new_score < value:
                 value = new_score
                 best_column = column
         return best_column, value
 
 
+
+
 def is_terminal_node(
-        board: np.ndarray, valid_columns: np.ndarray
-) -> Tuple[bool, GameState, int, BoardPiece]:
-    """check if one possible action leads to either AI or PLAYER winning or draw
-    (player performing the action is not specified
-    :param board:
-    :param valid_columns:
-    :return: """
-    for column in valid_columns:
-        board_after_PLAYER1_action = board.copy()
-        board_after_PLAYER1_action = apply_player_action(board_after_PLAYER1_action, column, PLAYER1)
+    board: np.ndarray, action: PlayerAction
+) -> bool:
+    """check if next applied action leads to either AI or PLAYER winning or draw
+    (player performing the action is not specified"""
+    board_after_PLAYER1_action = board.copy()
+    board_after_PLAYER1_action = apply_player_action(board_after_PLAYER1_action, action, PLAYER1)
 
-        if check_end_state(board_after_PLAYER1_action, PLAYER1) != GameState.STILL_PLAYING:
-            return True, check_end_state(board_after_PLAYER1_action, PLAYER1), column, PLAYER1
+    board_after_PLAYER2_action = board.copy()
+    board_after_PLAYER2_action = apply_player_action(board_after_PLAYER2_action, action, PLAYER2)
 
-        board_after_PLAYER2_action = board.copy()
-        board_after_PLAYER2_action = apply_player_action(board_after_PLAYER2_action, column, PLAYER2)
+    if check_end_state(board_after_PLAYER1_action, PLAYER1) != GameState.STILL_PLAYING:
+        return True
 
-        if check_end_state(board_after_PLAYER2_action, PLAYER2) != GameState.STILL_PLAYING:
-            return True, check_end_state(board_after_PLAYER2_action, PLAYER2), column, PLAYER2
-
+    if check_end_state(board_after_PLAYER2_action, PLAYER2) != GameState.STILL_PLAYING:
+        return True
     else:
-        return False, GameState.STILL_PLAYING, None, None
+        return False
 
 
 def get_valid_columns(board: np.ndarray) -> ndarray:
