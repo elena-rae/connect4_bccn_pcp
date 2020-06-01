@@ -70,8 +70,7 @@ def human_vs_agent(
 if __name__ == "__main__":
     """for 2 humans playing """
     #human_vs_agent(user_move)
+
     """ for playing against random agent """
     human_vs_agent(generate_move)
-    """ for playing against evaluating the board horizontally  """
-    #human_vs_agent(generate_move)
 

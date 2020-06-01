@@ -25,81 +25,70 @@ def test_get_valid_column():
 
 
 def test_evaluate_board():
-    board = initialize_game_state()
+    """"""
     """assert horizontal evaluation"""
+    board = initialize_game_state()
     for x in range(3):
         apply_player_action(board, x+2, 1)
+
+    score_player1= evaluate_board(board, 1)
+    #print(pretty_print_board(board))
+    assert score_player1 > 0
+
     for x in range(2):
         apply_player_action(board, x+2, 2)
 
-    print(pretty_print_board(board))
+    score_player2 = evaluate_board(board, 2)
+    score_player1= evaluate_board(board, 1)
+
+    #print(pretty_print_board(board))
+    assert score_player2 == -score_player1
+
+
+    """assert vertical evaluation """
+    board = initialize_game_state()
+    for x in range(3):
+        apply_player_action(board, 3, 1)
+
     score_player1 = evaluate_board(board, 1)
     assert score_player1 > 0
 
+    for x in range(3):
+        apply_player_action(board, 5, 2)
+
     score_player2 = evaluate_board(board, 2)
+    score_player1 = evaluate_board(board, 1)
+    #print(pretty_print_board(board))
+
+    assert score_player2 == -score_player1
+
+    """assert diagonal evaluation positiv slope """
+    board = initialize_game_state()
+    for x in range(2):
+        apply_player_action(board, x + 4, 2)
+    for x in range(3):
+        apply_player_action(board, x + 3, 1)
+
+    score_player1 = evaluate_board(board, 1)
+    score_player2 = evaluate_board(board, 2)
+    #print(pretty_print_board(board))
+    assert score_player1 > 0
     assert score_player2 < 0
 
-    """assert vertical evaluation """
+
+    """assert diagonal evaluation negative slope """
+    board = initialize_game_state()
+    apply_player_action(board, 2, 2)
+    for x in range(2):
+        apply_player_action(board, x+2, 1)
     for x in range(3):
-        apply_player_action(board, 4, 2)
-    print(pretty_print_board(board))
+        apply_player_action(board, x+2, 2)
+
+    score_player1 = evaluate_board(board, 1)
     score_player2 = evaluate_board(board, 2)
+    #print(pretty_print_board(board))
+    assert score_player1 < 0
     assert score_player2 > 0
 
-
-
-
-def test_is_terminal_node():
-    """"""
-    """"check is_terminal_node for final node GameState.IS_DRAW """
-    board_draw = initialize_game_state()
-
-    for row in range(2):
-        for x in (0, 1, 4, 5):
-            apply_player_action(board_draw, x, 1)
-        for o in (2, 3, 6):
-            apply_player_action(board_draw, o, 2)
-
-    for row in range(1):
-        for x in (2, 3, 6):
-            apply_player_action(board_draw, x, 1)
-        for o in (0, 1, 4, 5):
-            apply_player_action(board_draw, o, 2)
-
-    for row in range(2):
-        for x in (0, 1, 4, 5):
-            apply_player_action(board_draw, x, 1)
-        for o in (2, 3, 6):
-            apply_player_action(board_draw, o, 2)
-
-    for row in range(1):
-        for x in (0, 1, 2, 4):
-            apply_player_action(board_draw, x, 1)
-        for o in (3, 5):
-            apply_player_action(board_draw, o, 2)
-
-    print(pretty_print_board(board_draw))
-    assert is_terminal_node(board_draw,6) is True
-    print("next action at position 6")
-    print()
-
-    """"check is_terminal_node for final node GameState.IS_WIN is True """
-    board_win = initialize_game_state()
-
-    for row in range(3):
-        for x in (0, 1, 4, 5):
-            apply_player_action(board_win, x, 1)
-        for o in (2, 3):
-            apply_player_action(board_win, o, 2)
-
-    print(pretty_print_board(board_win))
-
-    assert is_terminal_node(board_win, 5) is True
-    print("next action at position 5")
-    print(is_terminal_node(board_win, 5))
-
-    """"check is_terminal_node for final node GameState.Still_playing is False """
-
-    assert is_terminal_node(board_win, 6) is False
-    print("next action at position 5")
-    print(is_terminal_node(board_win, 6))
+def test_evaluate_window():
+    pass

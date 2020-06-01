@@ -113,7 +113,7 @@ def apply_player_action(
     board is returned. If copy is True, makes a copy of the board before modifying it.
     """
     if copy:
-        oldboard = board
+        board = board.copy()
 
     if 0 <= action <= 6 is False:
         print("Choose a column for your action (0-6)")
@@ -129,178 +129,19 @@ def apply_player_action(
             print("Oops, column is already full!")
             break
 
-    if copy:
-        return board, oldboard
-    else:
-        return board
+    return board
 
 
-def connected_four_me(
-        board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
-) -> bool:
-    """
-    Inefficient! should not be used!
-
-    Returns True if there are four adjacent pieces equal to `player` arranged
-    in either a horizontal, vertical, or diagonal line. Returns False otherwise.
-    If desired, the last action taken (i.e. last column played) can be provided
-    for potential speed optimisation.
-    """
-
-    """ check if input /last action is legit"""
-    if player == 0:
-        print("No previous player action")
-        return False
-
-    """ find out the row of last action"""
-    for row in range(0, 6):
-        if board[row, last_action] == 0:
-            last_row = row - 1
-            break
-        if row == 5:
-            last_row = 5
-    print("last (row, column) (", last_row, ",", last_action, ")")
-
-    count = 0  # counter for evaluating number of neighbouring pieces
-
-    """ search horizontally to right (increasing column nr) """
-    for step in range(0, 3):
-        step = step + 1
-        print(step, "to right")
-        if last_action + step <= 6:
-            if board[last_row, last_action + step] == player:
-                count = count + 1
-                print("count", count)
-            else:
-                print("nothing right")
-                break
-        else:
-            print("right over board")
-            break
-    """ search horizontally to left (decreasing column nr) """
-    for step in range(0, 3):
-        step = step + 1
-        print(step, "to left")
-        if last_action - step >= 0:
-            if board[last_row, last_action - step] == player:
-                count = count + 1
-                print("count", count)
-            else:
-                print("nothing left")
-                break
-        else:
-            print("left over board")
-            break
-
-    """ check if horizontal connect four is achieved, if not reset counter"""
-    if count >= 3:
-        print("4 connected, Player {} won!".format(player))
-        return True
-    else:
-        count = 0
-
-    """search vertically down the column (decreasing row nr)"""
-    for step in range(0, 3):
-        step = step + 1
-        print(step, "down")
-        if last_row - step >= 0:
-            if board[last_row - step, last_action] == player:
-                count = count + 1
-                print("count", count)
-            else:
-                print("wrong piece")
-                break
-        else:
-            print("down over board")
-            break
-
-    """check if vertical connect four is achieved, if not reset counter  """
-    if count >= 3:
-        print("4 connected, Player {} won!".format(player))
-        return True
-    else:
-        count = 0
-
-    """ search diagonal to upper right (increasing column nr, increasing row nr) """
-    for step in range(0, 3):
-        step = step + 1
-        print(step, "to up right")
-        if last_row + step <= 5 and last_action + step <= 6:
-            if board[last_row + step, last_action + step] == player:
-                count = count + 1
-                print("count", count)
-            else:
-                print("nothing up right")
-                break
-        else:
-            print("up right over board")
-            break
-    """ search diagonal to lower left (decreasing column nr, decreasing row nr) """
-    for step in range(0, 3):
-        step = step + 1
-        print(step, "to lower left")
-        if last_row - step >= 0 and last_action - step >= 0:
-            if board[last_row - step, last_action - step] == player:
-                count = count + 1
-                print("count", count)
-            else:
-                print("nothing lower left")
-                break
-        else:
-            print("lower left over board")
-            break
-
-    """check if diagonal (lower left to upper right) connect four is achieved, if not reset counter  """
-    if count >= 3:
-        print("4 connected, Player {} won!".format(player))
-        return True
-    else:
-        count = 0
-
-    """ search diagonal to lower right (increasing column nr, decreasing row nr) """
-    for step in range(0, 3):
-        step = step + 1
-        print(step, "to low right")
-        if last_row - step >= 0 and last_action + step <= 6:
-            if board[last_row - step, last_action + step] == player:
-                count = count + 1
-                print("count", count)
-            else:
-                print("nothing low right")
-                break
-        else:
-            print("low right over board")
-            break
-    """ search diagonal to upper left (decreasing column nr, increasing row nr) """
-    for step in range(0, 3):
-        step = step + 1
-        print(step, "to upper left")
-        if last_row + step <= 5 and last_action - step >= 0:
-            if board[last_row + step, last_action - step] == player:
-                count = count + 1
-                print("count", count)
-            else:
-                print("nothing upper left")
-                break
-        else:
-            print("upper left over board")
-            break
-
-    """check if diagonal (lower left to upper right) connect four is achieved, if not reset counter  """
-    if count >= 3:
-        print("4 connected, Player {} won!".format(player))
-        return True
-    else:
-        count = 0
-        print("next player continue!")
-        return False
 
 
 def connected_four(
     board: np.ndarray, player: BoardPiece, _last_action: Optional[PlayerAction] = None
 ) -> bool:
-    """Choose N, for connect_four, N = 4"""
-    CONNECT_N=4
+    """
+    search board for 4 pieces in a row, if this is the case return True
+    """
+
+    CONNECT_N = 4 ### Choose N, for connect_four, N = 4
 
     rows, cols = board.shape
     rows_edge = rows - CONNECT_N + 1
