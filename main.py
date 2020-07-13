@@ -3,7 +3,8 @@ from typing import Optional, Callable
 from agents.common import PlayerAction, BoardPiece
 from agents.common import SavedState, GenMove
 #from agents.agent_random import generate_move
-from agents.agent_minimax import generate_move
+#from agents.agent_minimax import generate_move
+from agents.agent_mct import generate_move
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)

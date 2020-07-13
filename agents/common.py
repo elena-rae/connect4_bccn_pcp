@@ -1,8 +1,9 @@
 import numpy as np
 from enum import Enum
+import copy
 from typing import Optional, Callable, Tuple
+# from numpy.core._multiarray_umath import ndarray
 
-from numpy.core._multiarray_umath import ndarray
 
 class SavedState:
     pass
@@ -36,8 +37,6 @@ def pretty_print_board(board: np.ndarray) -> str:
     """ return `board` converted to a human readable string representation,
         to be used when playing or printing diagnostics to the console (stdout). The piece in
         board[0, 0] should appear in the lower-left."""
-
-
     """ flip board array and transform into string,  
     change array values into symbols (x,o), raise error for invalid values in board array """
     flipped_board = np.flipud(board.astype(str))
@@ -51,9 +50,7 @@ def pretty_print_board(board: np.ndarray) -> str:
             elif flipped_board[r, c] == "2":
                 flipped_board[r, c] = "o"
             else:
-                print("Invalid Input")
-                return 0
-
+                return "Invalid Input"
 
     pretty_board = ["|===============|"]
 
@@ -70,55 +67,50 @@ def pretty_print_board(board: np.ndarray) -> str:
     return pretty_board
 
 
-
-
 def string_to_board(pp_board: str) -> np.ndarray:
     """
     Takes the output of pretty_print_board and turns it back into an ndarray.
     This is quite useful for debugging, when the agent crashed and you have the last
     board state as a string.
     """
-    board_as_array = np.zeros((6,7), dtype=BoardPiece)
+    board_as_array = np.zeros((6, 7), dtype=BoardPiece)
 
     """transform string to array for better handling"""
     board = np.array(list(pp_board))
     """remove newlines comands from string, and reshape back to row x columns and remove pretty boarders"""
     newline_indices = np.argwhere(board == "\n")
     board = np.delete(board, newline_indices)
-    board = board.reshape((9,17))
-    boarder_indices = [0,7,8]
-    board = np.delete(board,boarder_indices,0)
+    board = board.reshape((9, 17))
+    boarder_indices = [0, 7, 8]
+    board = np.delete(board, boarder_indices, 0)
 
-    """ remove surplus gaps, for every x place 1 and every o place 2 in the initialized 0-array  """
-    gap_indices = (0,1,3,5,7,9,11,13,15,16,17)
+    """ remove surplus gaps, for every x place 1 and every o place 2 the initialized 0-array  """
+    gap_indices = (0, 1, 3, 5, 7, 9, 11, 13, 15, 16, 17)
 
     for r, row in enumerate(board):
-        string_to_int= np.delete(row, gap_indices)
+        string_to_int = np.delete(row, gap_indices)
         x_indices = np.argwhere(string_to_int == "x")
-        board_as_array[r,x_indices] = 1
+        board_as_array[r, x_indices] = 1
         o_indices = np.argwhere(string_to_int == "o")
-        board_as_array[r,o_indices] = 2
+        board_as_array[r, o_indices] = 2
 
     """flip and return the array"""
     board_as_array = np.flipud(board_as_array)
     return board_as_array
 
 
-
-def apply_player_action(
-        board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False
-) -> np.ndarray:
+def apply_player_action(board: np.ndarray, action: PlayerAction, player: BoardPiece, copying=False) -> np.ndarray:
     """
     Sets board[i, action] = player, where i is the lowest open row. The modified
     board is returned. If copy is True, makes a copy of the board before modifying it.
     """
-    if copy:
-        board = board.copy()
+    if copying:
+        board = copy.copy(board)
 
     if 0 <= action <= 6 is False:
-        print("Choose a column for your action (0-6)")
+        print('Pick a column for your action (0-6)')
     if 1 <= player <= 2 is False:
-        print("Which Player? (Player1 -> 1, Player2 -> 2")
+        print('Which Player? (Player1 -> 1, Player2 -> 2')
 
     for row in range(0, 6):
         if board[row, action] == 0:
@@ -126,37 +118,32 @@ def apply_player_action(
             break
 
         if row == 5:
-            print("Oops, column is already full!")
             break
 
     return board
 
 
-
-
 def connected_four(
-    board: np.ndarray, player: BoardPiece, _last_action: Optional[PlayerAction] = None
+    board: np.ndarray, player: BoardPiece, _last_action: Optional[PlayerAction] = None, connect_n=4
 ) -> bool:
     """
-    search board for 4 pieces in a row, if this is the case return True
+    search board for connect_n pieces in a row, if this is the case return True
     """
 
-    CONNECT_N = 4 ### Choose N, for connect_four, N = 4
-
     rows, cols = board.shape
-    rows_edge = rows - CONNECT_N + 1
-    cols_edge = cols - CONNECT_N + 1
+    rows_edge = rows - connect_n + 1
+    cols_edge = cols - connect_n + 1
     for i in range(rows):
         for j in range(cols_edge):
-            if np.all(board[i, j:j+CONNECT_N] == player):
+            if np.all(board[i, j:j + connect_n] == player):
                 return True
     for i in range(rows_edge):
         for j in range(cols):
-            if np.all(board[i:i+CONNECT_N, j] == player):
+            if np.all(board[i:i + connect_n, j] == player):
                 return True
     for i in range(rows_edge):
         for j in range(cols_edge):
-            block = board[i:i+CONNECT_N, j:j+CONNECT_N]
+            block = board[i:i + connect_n, j:j + connect_n]
             if np.all(np.diag(block) == player):
                 return True
             if np.all(np.diag(block[::-1, :]) == player):
@@ -164,11 +151,7 @@ def connected_four(
     return False
 
 
-
-
-def check_end_state(
-        board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
-) -> GameState:
+def check_end_state(board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None) -> GameState:
     """
     Returns the current game state for the current `player`, i.e. has their last
     action won (GameState.IS_WIN) or drawn (GameState.IS_DRAW) the game,
@@ -177,9 +160,8 @@ def check_end_state(
     if connected_four(board, player, last_action) is True:
         return GameState.IS_WIN
 
-    if np.any(board == 0) == True:
+    if np.any(board == 0):
         return GameState.STILL_PLAYING
 
-    if np.all(board != 0) == True:
+    if np.all(board != 0):
         return GameState.IS_DRAW
-
