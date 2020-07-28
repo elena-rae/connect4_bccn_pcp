@@ -102,23 +102,23 @@ def string_to_board(pp_board: str) -> np.ndarray:
 def apply_player_action(board: np.ndarray, action: PlayerAction, player: BoardPiece, copying=False) -> np.ndarray:
     """
     Sets board[i, action] = player, where i is the lowest open row. The modified
-    board is returned. If copy is True, makes a copy of the board before modifying it.
+    board is returned. If copy is True, copy the board before modifying.
     """
     if copying:
-        board = copy.copy(board)
+        board = board.copy()
 
-    if 0 <= action <= 6 is False:
-        print('Pick a column for your action (0-6)')
-    if 1 <= player <= 2 is False:
-        print('Which Player? (Player1 -> 1, Player2 -> 2')
+    rows, cols = board.shape
+    col_array = np.arange(0, cols, 1)
 
-    for row in range(0, 6):
-        if board[row, action] == 0:
-            board[row, action] = player
-            break
+    if action in col_array:
+        if player == PLAYER1 or player == PLAYER2:
 
-        if row == 5:
-            break
+            for row in range(rows):
+                if board[row, action] == NO_PLAYER:
+                    board[row, action] = player
+                    break
+    else:
+        print("invalid input to common.apply_player_action")
 
     return board
 
